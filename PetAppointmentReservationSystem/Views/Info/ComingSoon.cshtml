@@ -1,0 +1,10 @@
+﻿@{
+    ViewData["Title"] = ViewData["Section"]?.ToString();
+}
+
+<div class="coming-soon">
+    <div class="coming-soon-icon">🚧</div>
+    <h2>@ViewData["Section"] is coming soon</h2>
+    <p>This part of PetConnect hasn't been built yet — check back after the next milestone.</p>
+    <a class="btn btn-primary" asp-controller="Home" asp-action="Index">Back to Home</a>
+</div>

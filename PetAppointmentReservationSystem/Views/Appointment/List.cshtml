@@ -1,0 +1,88 @@
+﻿@model PetAppointmentReservationSystem.Models.CalendarViewModel
+@{
+    ViewData["Title"] = "Appointment Calendar";
+}
+
+<div class="calendar-header">
+    <div>
+        <h2>@Model.Date.ToString("dddd, MMMM d yyyy")</h2>
+        <p class="muted">@Model.StaffColumns.Count staff on duty · @Model.StaffColumns.Sum(c => c.Appointments.Count) appointments today</p>
+    </div>
+    <a class="btn btn-primary" asp-controller="Appointment" asp-action="Book">+ New Appointment</a>
+</div>
+
+<div class="legend">
+    <span class="legend-item"><i class="dot dot-grooming"></i> Grooming</span>
+    <span class="legend-item"><i class="dot dot-medical"></i> Medical</span>
+    <span class="legend-item"><i class="dot dot-other"></i> Other</span>
+</div>
+
+<div class="calendar-scroll">
+    <div class="calendar-grid" style="--staff-count: @Model.StaffColumns.Count;">
+        <div class="calendar-corner"></div>
+        @foreach (var col in Model.StaffColumns)
+        {
+            <div class="calendar-staff-header">
+                <div class="staff-avatar">@(string.Join("", col.StaffName.Split(' ').Where(s => s.Length > 0).Select(s => s[0])).ToUpper())</div>
+                <span>@col.StaffName</span>
+            </div>
+        }
+
+        @{
+            int rowIndex = 0;
+        }
+        @foreach (var slot in Model.TimeSlots)
+        {
+            rowIndex++;
+            var rowParity = rowIndex % 2 == 0 ? "row-even" : "row-odd";
+
+            <div class="calendar-time-label @rowParity">@slot.ToString("h:mm tt")</div>
+
+            @foreach (var col in Model.StaffColumns)
+            {
+                <div class="calendar-cell @rowParity"></div>
+            }
+        }
+
+        @foreach (var col in Model.StaffColumns)
+        {
+            var colIndex = Model.StaffColumns.IndexOf(col) + 1;
+            foreach (var appt in col.Appointments)
+            {
+                var startOffset = (appt.StartTime - Model.TimeSlots.First()).TotalMinutes / 30.0;
+                var span = appt.DurationMinutes / 30.0;
+                var typeKey = (appt.ServiceType ?? "").ToLower();
+                var typeClass = typeKey == "grooming" ? "bar-grooming"
+                                : typeKey == "medical" ? "bar-medical"
+                                : "bar-other";
+
+                <div class="appointment-bar @typeClass"
+                     tabindex="0"
+                     style="grid-column: @(colIndex + 1); grid-row: @((int)Math.Floor(startOffset) + 2) / span @(Math.Max(1, (int)Math.Ceiling(span)));"
+                     data-id="@appt.Id"
+                     data-pet="@appt.PetName"
+                     data-owner="@appt.OwnerName"
+                     data-service="@appt.ServiceName"
+                     data-type="@appt.ServiceType"
+                     data-duration="@appt.DurationMinutes"
+                     data-start="@appt.StartTime.ToString("h:mm tt")"
+                     data-staff="@appt.StaffName"
+                     data-notes="@appt.Notes"
+                     data-phone="@appt.Phone"
+                     data-email="@appt.Email"
+                     onclick="openAppointmentModal(this)">
+                    <strong>@appt.PetName</strong>
+                    <span>@appt.ServiceName</span>
+
+                    <div class="appt-tooltip">
+                        <strong>@appt.PetName</strong> · @appt.ServiceName<br />
+                        @appt.StartTime.ToString("h:mm tt") · @appt.DurationMinutes min<br />
+                        with @appt.StaffName
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@await Html.PartialAsync("_AppointmentModal")
