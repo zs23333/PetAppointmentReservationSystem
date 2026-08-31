@@ -1,0 +1,52 @@
+﻿@model IEnumerable<PetAppointmentReservationSystem.Models.Appointment>
+@{
+    ViewData["Title"] = "Manage Appointments";
+}
+
+<div class="calendar-header">
+    <div>
+        <h2>All Appointments</h2>
+        <p class="muted">@Model.Count() total across all customers</p>
+    </div>
+</div>
+
+<div class="table-responsive pc-table-wrap">
+    <table class="table table-dark table-hover align-middle mb-0">
+        <thead>
+            <tr>
+                <th>Pet</th>
+                <th>Owner</th>
+                <th>Service</th>
+                <th>Staff</th>
+                <th>Date &amp; Time</th>
+                <th>Duration</th>
+                <th class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var appt in Model)
+            {
+                <tr>
+                    <td><strong>@appt.Pet?.Name</strong></td>
+                    <td>@(appt.Pet?.Owner?.Username ?? "Unknown")</td>
+                    <td>@appt.Service</td>
+                    <td>@(appt.Staff?.Name ?? "Unassigned")</td>
+                    <td>@appt.Date.ToString("MMM d, yyyy h:mm tt")</td>
+                    <td>@appt.DurationMinutes min</td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-light" asp-controller="ManageAppointments" asp-action="Edit" asp-route-id="@appt.AppointmentId">Edit</a>
+                        <form asp-controller="ManageAppointments" asp-action="Cancel" asp-route-id="@appt.AppointmentId" method="post" class="d-inline" onsubmit="return confirm('Cancel this appointment?');">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Cancel</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            @if (!Model.Any())
+            {
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-4">No appointments in the system yet.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
