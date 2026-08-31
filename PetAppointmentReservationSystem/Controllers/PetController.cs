@@ -1,13 +1,16 @@
-﻿using Microsoft.AspNetCore.Hosting;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PetAppointmentReservationSystem.Models;
 using System.IO;
 using System.Linq;
+using System.Security.Claims;
 
 namespace PetAppointmentReservationSystem.Controllers
 {
+    [Authorize(Roles = "Customer")]
     public class PetController : Controller
     {
         private readonly PetConnectContext _context;
@@ -19,9 +22,12 @@ namespace PetAppointmentReservationSystem.Controllers
             _env = env;
         }
 
+        private int CurrentUserId =>
+            int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
         public IActionResult Index()
         {
-            var pets = _context.Pets.Include(p => p.Owner).ToList();
+            var pets = _context.Pets.Where(p => p.OwnerId == CurrentUserId).ToList();
             return View(pets);
         }
 
@@ -35,18 +41,23 @@ namespace PetAppointmentReservationSystem.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Create(Pet model, IFormFile photo)
         {
+            // PhotoPath isn't submitted directly (it's derived from the uploaded file),
+            // so remove it from binding validation and check the actual file instead —
+            // this is what makes the [Required] on Pet.PhotoPath meaningfully enforced.
+            ModelState.Remove(nameof(Pet.PhotoPath));
+
+            if (photo == null || photo.Length == 0)
+            {
+                ModelState.AddModelError(string.Empty, "A photo is required to register a pet.");
+            }
+
             if (!ModelState.IsValid)
             {
                 return View(model);
             }
 
-            var userId = HttpContext.Session.GetInt32("UserId");
-            model.OwnerId = userId ?? 0;
-
-            if (photo != null && photo.Length > 0)
-            {
-                model.PhotoPath = SavePhoto(photo);
-            }
+            model.OwnerId = CurrentUserId;
+            model.PhotoPath = SavePhoto(photo);
 
             _context.Pets.Add(model);
             _context.SaveChanges();
@@ -58,7 +69,7 @@ namespace PetAppointmentReservationSystem.Controllers
         [HttpGet]
         public IActionResult Edit(int id)
         {
-            var pet = _context.Pets.Find(id);
+            var pet = _context.Pets.FirstOrDefault(p => p.PetId == id && p.OwnerId == CurrentUserId);
             if (pet == null)
             {
                 return NotFound();
@@ -76,18 +87,34 @@ namespace PetAppointmentReservationSystem.Controllers
                 return NotFound();
             }
 
+            var existing = _context.Pets.AsNoTracking()
+                .FirstOrDefault(p => p.PetId == id && p.OwnerId == CurrentUserId);
+            if (existing == null)
+            {
+                return NotFound();
+            }
+
+            // Keep [Required] meaningful on Edit too: only demand a NEW photo if
+            // there's no existing photo to fall back on.
+            ModelState.Remove(nameof(Pet.PhotoPath));
+            model.PhotoPath = existing.PhotoPath;
+            model.OwnerId = existing.OwnerId;
+
+            if (photo == null || photo.Length == 0)
+            {
+                if (string.IsNullOrEmpty(existing.PhotoPath))
+                {
+                    ModelState.AddModelError(string.Empty, "A photo is required.");
+                }
+            }
+            else
+            {
+                model.PhotoPath = SavePhoto(photo);
+            }
+
             if (!ModelState.IsValid)
             {
                 return View(model);
-            }
-
-            var existing = _context.Pets.AsNoTracking().FirstOrDefault(p => p.PetId == id);
-            model.PhotoPath = existing?.PhotoPath;
-            model.OwnerId = existing?.OwnerId ?? model.OwnerId;
-
-            if (photo != null && photo.Length > 0)
-            {
-                model.PhotoPath = SavePhoto(photo);
             }
 
             _context.Pets.Update(model);
@@ -101,7 +128,7 @@ namespace PetAppointmentReservationSystem.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Delete(int id)
         {
-            var pet = _context.Pets.Find(id);
+            var pet = _context.Pets.FirstOrDefault(p => p.PetId == id && p.OwnerId == CurrentUserId);
             if (pet != null)
             {
                 _context.Pets.Remove(pet);

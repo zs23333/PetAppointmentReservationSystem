@@ -1,12 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using PetAppointmentReservationSystem.Helpers;
 using PetAppointmentReservationSystem.Models;
 using System.Linq;
+using System.Security.Claims;
 
 namespace PetAppointmentReservationSystem.Controllers
 {
+    [Authorize(Roles = "Customer")]
     public class AppointmentController : Controller
     {
         private readonly PetConnectContext _context;
@@ -16,10 +18,16 @@ namespace PetAppointmentReservationSystem.Controllers
             _context = context;
         }
 
+        private int CurrentUserId =>
+            int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+        // Customer's own "Appointment Book" — only their pets' appointments.
         public IActionResult List()
         {
             var appointments = _context.Appointments
                 .Include(a => a.Staff)
+                .Include(a => a.Pet)
+                .Where(a => a.Pet.OwnerId == CurrentUserId)
                 .OrderBy(a => a.Date)
                 .ToList();
 
@@ -29,80 +37,61 @@ namespace PetAppointmentReservationSystem.Controllers
         [HttpGet]
         public IActionResult Create()
         {
-            ViewBag.StaffList = new SelectList(_context.StaffMembers.ToList(), "StaffId", "Name");
+            PopulateDropdowns();
             return View(new Appointment { Date = DateTime.Today.AddHours(9), DurationMinutes = 30 });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(Appointment model, string ownerEmail)
+        public IActionResult Create(Appointment model, string newPetName, string newPetSpecies, string newPetBreed)
         {
+            // Auto-create a pet if the customer didn't pick one from the dropdown
+            // but typed a new pet's name instead.
+            if (model.PetId == 0 && !string.IsNullOrWhiteSpace(newPetName))
+            {
+                var newPet = new Pet
+                {
+                    Name = newPetName,
+                    Species = newPetSpecies,
+                    Breed = newPetBreed,
+                    OwnerId = CurrentUserId,
+                    PhotoPath = "/images/pets/placeholder.png" // no upload here; can be added later via Pet/Edit
+                };
+                _context.Pets.Add(newPet);
+                _context.SaveChanges();
+                model.PetId = newPet.PetId;
+                ModelState.Remove(nameof(model.PetId));
+            }
+
+            if (model.PetId == 0)
+            {
+                ModelState.AddModelError(string.Empty, "Please select an existing pet or enter a new pet's name.");
+            }
+
             if (!ModelState.IsValid)
             {
-                ViewBag.StaffList = new SelectList(_context.StaffMembers.ToList(), "StaffId", "Name", model.StaffId);
+                PopulateDropdowns();
                 return View(model);
             }
 
             _context.Appointments.Add(model);
             _context.SaveChanges();
 
-            var emailSent = EmailHelper.SendAppointmentConfirmation(ownerEmail, model.PetName, model.Service, model.Date);
-
-            TempData["Message"] = emailSent
-                ? $"Appointment booked for {model.PetName}. A confirmation email was sent to {ownerEmail}."
-                : $"Appointment booked for {model.PetName}.";
-
+            TempData["Message"] = "Appointment booked successfully.";
             return RedirectToAction(nameof(List));
         }
 
-        [HttpGet]
-        public IActionResult Edit(int id)
+        private void PopulateDropdowns(int? selectedPetId = null, int? selectedStaffId = null)
         {
-            var appointment = _context.Appointments.Find(id);
-            if (appointment == null)
-            {
-                return NotFound();
-            }
+            var myPets = _context.Pets.Where(p => p.OwnerId == CurrentUserId).ToList();
+            ViewBag.PetList = new SelectList(myPets, "PetId", "Name", selectedPetId);
 
-            ViewBag.StaffList = new SelectList(_context.StaffMembers.ToList(), "StaffId", "Name", appointment.StaffId);
-            return View(appointment);
-        }
+            // Always queried fresh from the database, so newly registered staff
+            // appear immediately without any manual seeding step.
+            var staff = _context.StaffMembers.OrderBy(s => s.Name).ToList();
+            ViewBag.StaffList = new SelectList(staff, "StaffId", "Name", selectedStaffId);
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult Edit(int id, Appointment model)
-        {
-            if (id != model.AppointmentId)
-            {
-                return NotFound();
-            }
-
-            if (!ModelState.IsValid)
-            {
-                ViewBag.StaffList = new SelectList(_context.StaffMembers.ToList(), "StaffId", "Name", model.StaffId);
-                return View(model);
-            }
-
-            _context.Appointments.Update(model);
-            _context.SaveChanges();
-
-            TempData["Message"] = $"Appointment for {model.PetName} was updated.";
-            return RedirectToAction(nameof(List));
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult Delete(int id)
-        {
-            var appointment = _context.Appointments.Find(id);
-            if (appointment != null)
-            {
-                _context.Appointments.Remove(appointment);
-                _context.SaveChanges();
-                TempData["Message"] = "Appointment deleted.";
-            }
-
-            return RedirectToAction(nameof(List));
+            ViewBag.ServiceList = new SelectList(ServiceCatalog.Services);
         }
     }
 }

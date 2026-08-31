@@ -9,7 +9,7 @@
 </section>
 
 <section class="quick-links-grid">
-    @if (ViewBag.Username == null)
+    @if (User.Identity?.IsAuthenticated != true)
     {
         <a class="quick-card" asp-controller="Account" asp-action="Login">
             <h3>Login</h3>
@@ -24,21 +24,33 @@
         </a>
     }
 
-    <a class="quick-card featured" asp-controller="Appointment" asp-action="Create">
-        <h3>Book Appointment</h3>
-        <p>Schedule a new visit for your pet.</p>
-        <span class="quick-arrow">Book Now →</span>
-    </a>
+    @if (User.IsInRole("Customer"))
+    {
+        <a class="quick-card featured" asp-controller="Appointment" asp-action="Create">
+            <h3>Book Appointment</h3>
+            <p>Schedule a new visit for your pet.</p>
+            <span class="quick-arrow">Book Now →</span>
+        </a>
 
-    <a class="quick-card" asp-controller="Appointment" asp-action="List">
-        <h3>Appointment Book</h3>
-        <p>View, edit, or cancel scheduled visits.</p>
-        <span class="quick-arrow">Open Calendar →</span>
-    </a>
+        <a class="quick-card" asp-controller="Appointment" asp-action="List">
+            <h3>Appointment Book</h3>
+            <p>View your scheduled visits.</p>
+            <span class="quick-arrow">Open Calendar →</span>
+        </a>
 
-    <a class="quick-card" asp-controller="Pet" asp-action="Index">
-        <h3>My Pets</h3>
-        <p>Manage your registered pets and photos.</p>
-        <span class="quick-arrow">View Pets →</span>
-    </a>
+        <a class="quick-card" asp-controller="Pet" asp-action="Index">
+            <h3>My Pets</h3>
+            <p>Manage your registered pets and photos.</p>
+            <span class="quick-arrow">View Pets →</span>
+        </a>
+    }
+
+    @if (User.IsInRole("Staff"))
+    {
+        <a class="quick-card featured" asp-controller="ManageAppointments" asp-action="Index">
+            <h3>Manage Appointments</h3>
+            <p>View, edit, or cancel all customer bookings.</p>
+            <span class="quick-arrow">Open Dashboard →</span>
+        </a>
+    }
 </section>

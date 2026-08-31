@@ -36,13 +36,8 @@ namespace PetAppointmentReservationSystem.Migrations
                     b.Property<int>("DurationMinutes")
                         .HasColumnType("int");
 
-                    b.Property<string>("OwnerName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PetName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("PetId")
+                        .HasColumnType("int");
 
                     b.Property<string>("Service")
                         .IsRequired()
@@ -52,6 +47,8 @@ namespace PetAppointmentReservationSystem.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("AppointmentId");
+
+                    b.HasIndex("PetId");
 
                     b.HasIndex("StaffId");
 
@@ -77,6 +74,7 @@ namespace PetAppointmentReservationSystem.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("PhotoPath")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Species")
@@ -104,6 +102,9 @@ namespace PetAppointmentReservationSystem.Migrations
                     b.Property<string>("Role")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int");
 
                     b.HasKey("StaffId");
 
@@ -161,11 +162,19 @@ namespace PetAppointmentReservationSystem.Migrations
 
             modelBuilder.Entity("PetAppointmentReservationSystem.Models.Appointment", b =>
                 {
+                    b.HasOne("PetAppointmentReservationSystem.Models.Pet", "Pet")
+                        .WithMany()
+                        .HasForeignKey("PetId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("PetAppointmentReservationSystem.Models.Staff", "Staff")
                         .WithMany("Appointments")
                         .HasForeignKey("StaffId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Pet");
 
                     b.Navigation("Staff");
                 });

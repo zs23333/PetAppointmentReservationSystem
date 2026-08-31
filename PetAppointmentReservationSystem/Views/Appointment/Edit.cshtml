@@ -5,38 +5,27 @@
 
 <div class="form-card form-card-wide">
     <h2>Edit Appointment</h2>
-    <p class="form-card-sub">Update the details for this booking.</p>
 
-    <form asp-controller="Appointment" asp-action="Edit" asp-route-id="@Model.AppointmentId" method="post" novalidate>
+    <form asp-controller="ManageAppointments" asp-action="Edit" asp-route-id="@Model.AppointmentId" method="post" novalidate>
         <input type="hidden" asp-for="AppointmentId" />
         <div asp-validation-summary="All" class="validation-summary"></div>
 
-        <div class="form-row form-row-3">
+        <div class="form-row">
             <div class="form-group">
-                <label asp-for="PetName"></label>
-                <input asp-for="PetName" class="form-control" />
-                <span asp-validation-for="PetName" class="field-validation"></span>
-            </div>
-
-            <div class="form-group">
-                <label asp-for="OwnerName"></label>
-                <input asp-for="OwnerName" class="form-control" />
-                <span asp-validation-for="OwnerName" class="field-validation"></span>
+                <label asp-for="PetId">Pet</label>
+                <select asp-for="PetId" asp-items="ViewBag.PetList" class="form-control"></select>
             </div>
 
             <div class="form-group">
                 <label asp-for="Service"></label>
-                <input asp-for="Service" class="form-control" />
-                <span asp-validation-for="Service" class="field-validation"></span>
+                <select asp-for="Service" asp-items="ViewBag.ServiceList" class="form-control"></select>
             </div>
         </div>
 
         <div class="form-row">
             <div class="form-group">
                 <label asp-for="StaffId">Staff Member</label>
-                <select asp-for="StaffId" asp-items="ViewBag.StaffList" class="form-control">
-                    <option value="">-- Select staff --</option>
-                </select>
+                <select asp-for="StaffId" asp-items="ViewBag.StaffList" class="form-control"></select>
             </div>
 
             <div class="form-group">
@@ -54,7 +43,7 @@
 
         <div class="form-actions">
             <button type="submit" class="btn btn-pc-accent">Save Changes</button>
-            <a class="btn btn-ghost" asp-controller="Appointment" asp-action="List">Cancel</a>
+            <a class="btn btn-ghost" asp-controller="ManageAppointments" asp-action="Index">Cancel</a>
         </div>
     </form>
 </div>

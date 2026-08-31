@@ -1,12 +1,12 @@
 ﻿@model IEnumerable<PetAppointmentReservationSystem.Models.Appointment>
 @{
-    ViewData["Title"] = "Appointments";
+    ViewData["Title"] = "My Appointments";
 }
 
 <div class="calendar-header">
     <div>
-        <h2>All Appointments</h2>
-        <p class="muted">@Model.Count() total appointments</p>
+        <h2>Your Appointment Book</h2>
+        <p class="muted">@Model.Count() appointments booked</p>
     </div>
     <a class="btn btn-pc-accent" asp-controller="Appointment" asp-action="Create">+ New Appointment</a>
 </div>
@@ -16,36 +16,27 @@
         <thead>
             <tr>
                 <th>Pet</th>
-                <th>Owner</th>
                 <th>Service</th>
                 <th>Staff</th>
                 <th>Date &amp; Time</th>
                 <th>Duration</th>
-                <th class="text-end">Actions</th>
             </tr>
         </thead>
         <tbody>
             @foreach (var appt in Model)
             {
                 <tr>
-                    <td><strong>@appt.PetName</strong></td>
-                    <td>@appt.OwnerName</td>
+                    <td><strong>@appt.Pet?.Name</strong></td>
                     <td>@appt.Service</td>
                     <td>@(appt.Staff?.Name ?? "Unassigned")</td>
                     <td>@appt.Date.ToString("MMM d, yyyy h:mm tt")</td>
                     <td>@appt.DurationMinutes min</td>
-                    <td class="text-end">
-                        <a class="btn btn-sm btn-outline-light" asp-controller="Appointment" asp-action="Edit" asp-route-id="@appt.AppointmentId">Edit</a>
-                        <form asp-controller="Appointment" asp-action="Delete" asp-route-id="@appt.AppointmentId" method="post" class="d-inline" onsubmit="return confirm('Delete this appointment?');">
-                            <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
-                        </form>
-                    </td>
                 </tr>
             }
             @if (!Model.Any())
             {
                 <tr>
-                    <td colspan="7" class="text-center text-muted py-4">No appointments booked yet.</td>
+                    <td colspan="5" class="text-center text-muted py-4">No appointments booked yet.</td>
                 </tr>
             }
         </tbody>

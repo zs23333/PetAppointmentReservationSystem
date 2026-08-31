@@ -95,7 +95,7 @@ namespace PetAppointmentReservationSystem.Migrations
                 columns: new[] { "StaffId", "Name", "Role" },
                 values: new object[,]
                 {
-                    { 1, "Dr. Alice Tan", "Veterinarian" },
+                    { 1, "Dr. Jacqueline Chong", "Veterinarian" },
                     { 2, "Dr. Ben Wong", "Veterinarian" },
                     { 3, "Nisha", "Groomer" }
                 });

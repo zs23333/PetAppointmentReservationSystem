@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using PetAppointmentReservationSystem.Models;
 using System.Linq;
+using System.Security.Claims;
 
 namespace PetAppointmentReservationSystem.Controllers
 {
@@ -46,6 +48,23 @@ namespace PetAppointmentReservationSystem.Controllers
             _context.Users.Add(user);
             _context.SaveChanges();
 
+            // Requirement: staff registrations automatically populate the Staff table
+            // so they show up in the appointment-booking dropdown with no manual seeding.
+            if (model.Role == "Staff")
+            {
+                var alreadyStaff = _context.StaffMembers.Any(s => s.UserId == user.UserId);
+                if (!alreadyStaff)
+                {
+                    _context.StaffMembers.Add(new Staff
+                    {
+                        Name = model.Name,
+                        Role = "Staff",
+                        UserId = user.UserId
+                    });
+                    _context.SaveChanges();
+                }
+            }
+
             TempData["Message"] = $"Account created for {model.Name}. Please log in.";
             return RedirectToAction(nameof(Login));
         }
@@ -58,7 +77,7 @@ namespace PetAppointmentReservationSystem.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Login(LoginVM model)
+        public async Task<IActionResult> Login(LoginVM model)
         {
             if (!ModelState.IsValid)
             {
@@ -66,15 +85,28 @@ namespace PetAppointmentReservationSystem.Controllers
             }
 
             var user = _context.Users.FirstOrDefault(u =>
-                (u.Username == model.Username || u.Email == model.Email) &&
-                u.Password == model.Password);
+                u.Username == model.Username && u.Password == model.Password);
 
             if (user == null)
             {
-                ModelState.AddModelError(string.Empty, "Invalid username/email or password.");
+                ModelState.AddModelError(string.Empty, "Invalid username or password.");
                 return View(model);
             }
 
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
+                new Claim(ClaimTypes.Name, user.Username),
+                new Claim(ClaimTypes.Role, user.Role)
+            };
+
+            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(identity),
+                new AuthenticationProperties { IsPersistent = model.RememberMe });
+
+            // Session kept alongside claims auth for any legacy session-based reads elsewhere.
             HttpContext.Session.SetString("Username", user.Username);
             HttpContext.Session.SetString("Role", user.Role);
             HttpContext.Session.SetInt32("UserId", user.UserId);
@@ -83,8 +115,9 @@ namespace PetAppointmentReservationSystem.Controllers
             return RedirectToAction("Index", "Home");
         }
 
-        public IActionResult Logout()
+        public async Task<IActionResult> Logout()
         {
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             HttpContext.Session.Clear();
             TempData["Message"] = "You have been logged out.";
             return RedirectToAction("Index", "Home");

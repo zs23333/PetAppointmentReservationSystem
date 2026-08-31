@@ -8,12 +8,11 @@ namespace PetAppointmentReservationSystem.Models
         public int AppointmentId { get; set; }
 
         [Required]
-        [Display(Name = "Pet Name")]
-        public string PetName { get; set; }
+        [Display(Name = "Pet")]
+        public int PetId { get; set; }
 
-        [Required]
-        [Display(Name = "Owner Name")]
-        public string OwnerName { get; set; }
+        [ForeignKey(nameof(PetId))]
+        public Pet Pet { get; set; }
 
         [Display(Name = "Staff Member")]
         public int StaffId { get; set; }
@@ -22,6 +21,7 @@ namespace PetAppointmentReservationSystem.Models
         public Staff Staff { get; set; }
 
         [Required]
+        [Display(Name = "Service")]
         public string Service { get; set; }
 
         [Required]

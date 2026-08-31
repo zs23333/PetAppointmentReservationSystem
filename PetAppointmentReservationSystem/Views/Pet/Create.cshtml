@@ -5,7 +5,7 @@
 
 <div class="form-card form-card-wide">
     <h2>Add a Pet</h2>
-    <p class="form-card-sub">Register a new pet and upload a photo.</p>
+    <p class="form-card-sub">A photo is required to register a pet.</p>
 
     <form asp-controller="Pet" asp-action="Create" method="post" enctype="multipart/form-data" novalidate>
         <div asp-validation-summary="All" class="validation-summary"></div>
@@ -30,8 +30,8 @@
             </div>
 
             <div class="form-group">
-                <label for="photo">Photo</label>
-                <input type="file" name="photo" id="photo" class="form-control" accept="image/*" />
+                <label for="photo">Photo <span class="text-danger">*</span></label>
+                <input type="file" name="photo" id="photo" class="form-control" accept="image/*" required />
             </div>
         </div>
 

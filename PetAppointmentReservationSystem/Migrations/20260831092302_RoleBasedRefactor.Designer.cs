@@ -12,8 +12,8 @@ using PetAppointmentReservationSystem.Models;
 namespace PetAppointmentReservationSystem.Migrations
 {
     [DbContext(typeof(PetConnectContext))]
-    [Migration("20260826043627_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260831092302_RoleBasedRefactor")]
+    partial class RoleBasedRefactor
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -39,13 +39,8 @@ namespace PetAppointmentReservationSystem.Migrations
                     b.Property<int>("DurationMinutes")
                         .HasColumnType("int");
 
-                    b.Property<string>("OwnerName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PetName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("PetId")
+                        .HasColumnType("int");
 
                     b.Property<string>("Service")
                         .IsRequired()
@@ -55,6 +50,8 @@ namespace PetAppointmentReservationSystem.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("AppointmentId");
+
+                    b.HasIndex("PetId");
 
                     b.HasIndex("StaffId");
 
@@ -80,6 +77,7 @@ namespace PetAppointmentReservationSystem.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("PhotoPath")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Species")
@@ -108,6 +106,9 @@ namespace PetAppointmentReservationSystem.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int");
+
                     b.HasKey("StaffId");
 
                     b.ToTable("StaffMembers");
@@ -116,7 +117,7 @@ namespace PetAppointmentReservationSystem.Migrations
                         new
                         {
                             StaffId = 1,
-                            Name = "Dr. Jacqueline Chong",
+                            Name = "Dr. Alice Tan",
                             Role = "Veterinarian"
                         },
                         new
@@ -164,11 +165,19 @@ namespace PetAppointmentReservationSystem.Migrations
 
             modelBuilder.Entity("PetAppointmentReservationSystem.Models.Appointment", b =>
                 {
+                    b.HasOne("PetAppointmentReservationSystem.Models.Pet", "Pet")
+                        .WithMany()
+                        .HasForeignKey("PetId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("PetAppointmentReservationSystem.Models.Staff", "Staff")
                         .WithMany("Appointments")
                         .HasForeignKey("StaffId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Pet");
 
                     b.Navigation("Staff");
                 });
