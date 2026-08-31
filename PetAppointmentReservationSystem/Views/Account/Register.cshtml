@@ -7,10 +7,10 @@
     <div class="form-card">
         <div class="form-card-icon">🐾</div>
         <h2>Create your account</h2>
-        <p class="form-card-sub">Join PetConnect to start booking appointments.</p>
+        <p class="form-card-sub">Join PetConnect as a pet owner or staff member.</p>
 
         <form asp-controller="Account" asp-action="Register" method="post" novalidate>
-            <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+            <div asp-validation-summary="All" class="validation-summary"></div>
 
             <div class="form-group">
                 <label asp-for="Name"></label>
@@ -44,7 +44,15 @@
                 </div>
             </div>
 
-            <button type="submit" class="btn btn-primary btn-block">Create Account</button>
+            <div class="form-group">
+                <label asp-for="Role"></label>
+                <select asp-for="Role" class="form-control">
+                    <option value="Customer">Customer (pet owner)</option>
+                    <option value="Staff">Staff</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-pc-accent btn-block">Create Account</button>
             <p class="form-switch">Already have an account? <a asp-controller="Account" asp-action="Login">Login</a></p>
         </form>
     </div>

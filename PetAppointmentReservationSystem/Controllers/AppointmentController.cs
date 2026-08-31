@@ -1,133 +1,107 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using PetAppointmentReservationSystem.Helpers;
 using PetAppointmentReservationSystem.Models;
+using System.Linq;
 
 namespace PetAppointmentReservationSystem.Controllers
 {
     public class AppointmentController : Controller
     {
-        [HttpGet]
+        private readonly PetConnectContext _context;
+
+        public AppointmentController(PetConnectContext context)
+        {
+            _context = context;
+        }
+
         public IActionResult List()
         {
-            var today = DateTime.Today;
+            var appointments = _context.Appointments
+                .Include(a => a.Staff)
+                .OrderBy(a => a.Date)
+                .ToList();
 
-            var timeSlots = new List<DateTime>();
-            for (var t = today.AddHours(8); t <= today.AddHours(18); t = t.AddMinutes(30))
-            {
-                timeSlots.Add(t);
-            }
-
-            var staffColumns = new List<StaffColumnViewModel>
-            {
-                new StaffColumnViewModel
-                {
-                    StaffName = "Dr. Alice Tan",
-                    Appointments = new List<AppointmentViewModel>
-                    {
-                        new AppointmentViewModel
-                        {
-                            Id = 1,
-                            PetName = "Toby",
-                            OwnerName = "James Lee",
-                            ServiceName = "Grooming",
-                            ServiceType = "Grooming",
-                            DurationMinutes = 60,
-                            StartTime = today.AddHours(9),
-                            StaffName = "Dr. Alice Tan",
-                            Notes = "Full wash, trim, and nail clip.",
-                            Phone = "012-3456789",
-                            Email = "james.lee@example.com"
-                        },
-                        new AppointmentViewModel
-                        {
-                            Id = 2,
-                            PetName = "Rex",
-                            OwnerName = "Mei Ling",
-                            ServiceName = "Vaccination",
-                            ServiceType = "Medical",
-                            DurationMinutes = 30,
-                            StartTime = today.AddHours(11),
-                            StaffName = "Dr. Alice Tan",
-                            Notes = "Annual rabies booster.",
-                            Phone = "012-9988776",
-                            Email = "mei.ling@example.com"
-                        }
-                    }
-                },
-                new StaffColumnViewModel
-                {
-                    StaffName = "Dr. Ben Wong",
-                    Appointments = new List<AppointmentViewModel>
-                    {
-                        new AppointmentViewModel
-                        {
-                            Id = 3,
-                            PetName = "Doggo",
-                            OwnerName = "Sarah Lim",
-                            ServiceName = "General Checkup",
-                            ServiceType = "Medical",
-                            DurationMinutes = 45,
-                            StartTime = today.AddHours(10),
-                            StaffName = "Dr. Ben Wong",
-                            Notes = "Follow-up on skin allergy.",
-                            Phone = "013-2223344",
-                            Email = "sarah.lim@example.com"
-                        }
-                    }
-                },
-                new StaffColumnViewModel
-                {
-                    StaffName = "Groomer Nisha",
-                    Appointments = new List<AppointmentViewModel>
-                    {
-                        new AppointmentViewModel
-                        {
-                            Id = 4,
-                            PetName = "Rex",
-                            OwnerName = "Mei Ling",
-                            ServiceName = "Nail Trim",
-                            ServiceType = "Grooming",
-                            DurationMinutes = 20,
-                            StartTime = today.AddHours(14),
-                            StaffName = "Groomer Nisha",
-                            Notes = "Quick trim, pet is anxious with clippers.",
-                            Phone = "012-9988776",
-                            Email = "mei.ling@example.com"
-                        }
-                    }
-                }
-            };
-
-            var model = new CalendarViewModel
-            {
-                Date = today,
-                StaffColumns = staffColumns,
-                TimeSlots = timeSlots
-            };
-
-            return View(model);
+            return View(appointments);
         }
 
         [HttpGet]
-        public IActionResult Book()
+        public IActionResult Create()
         {
-            var model = new AppointmentVM
-            {
-                Date = DateTime.Today.AddHours(9),
-                DurationMinutes = 30
-            };
-            return View(model);
+            ViewBag.StaffList = new SelectList(_context.StaffMembers.ToList(), "StaffId", "Name");
+            return View(new Appointment { Date = DateTime.Today.AddHours(9), DurationMinutes = 30 });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Book(AppointmentVM model)
+        public IActionResult Create(Appointment model, string ownerEmail)
         {
             if (!ModelState.IsValid)
             {
+                ViewBag.StaffList = new SelectList(_context.StaffMembers.ToList(), "StaffId", "Name", model.StaffId);
                 return View(model);
             }
 
-            TempData["Message"] = $"Appointment booked for {model.PetName} with {model.StaffName}.";
+            _context.Appointments.Add(model);
+            _context.SaveChanges();
+
+            var emailSent = EmailHelper.SendAppointmentConfirmation(ownerEmail, model.PetName, model.Service, model.Date);
+
+            TempData["Message"] = emailSent
+                ? $"Appointment booked for {model.PetName}. A confirmation email was sent to {ownerEmail}."
+                : $"Appointment booked for {model.PetName}.";
+
+            return RedirectToAction(nameof(List));
+        }
+
+        [HttpGet]
+        public IActionResult Edit(int id)
+        {
+            var appointment = _context.Appointments.Find(id);
+            if (appointment == null)
+            {
+                return NotFound();
+            }
+
+            ViewBag.StaffList = new SelectList(_context.StaffMembers.ToList(), "StaffId", "Name", appointment.StaffId);
+            return View(appointment);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Edit(int id, Appointment model)
+        {
+            if (id != model.AppointmentId)
+            {
+                return NotFound();
+            }
+
+            if (!ModelState.IsValid)
+            {
+                ViewBag.StaffList = new SelectList(_context.StaffMembers.ToList(), "StaffId", "Name", model.StaffId);
+                return View(model);
+            }
+
+            _context.Appointments.Update(model);
+            _context.SaveChanges();
+
+            TempData["Message"] = $"Appointment for {model.PetName} was updated.";
+            return RedirectToAction(nameof(List));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Delete(int id)
+        {
+            var appointment = _context.Appointments.Find(id);
+            if (appointment != null)
+            {
+                _context.Appointments.Remove(appointment);
+                _context.SaveChanges();
+                TempData["Message"] = "Appointment deleted.";
+            }
+
             return RedirectToAction(nameof(List));
         }
     }

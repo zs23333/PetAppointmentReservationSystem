@@ -25,5 +25,9 @@ namespace PetAppointmentReservationSystem.Models
         [Compare(nameof(Password), ErrorMessage = "Passwords do not match.")]
         [Display(Name = "Confirm Password")]
         public string ConfirmPassword { get; set; }
+
+        [Required]
+        [Display(Name = "Account Type")]
+        public string Role { get; set; } = "Customer"; // "Customer" or "Staff"
     }
 }

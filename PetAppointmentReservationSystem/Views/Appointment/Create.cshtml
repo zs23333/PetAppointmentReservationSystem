@@ -1,0 +1,64 @@
+﻿@model PetAppointmentReservationSystem.Models.Appointment
+@{
+    ViewData["Title"] = "Book Appointment";
+}
+
+<div class="form-card form-card-wide">
+    <h2>Book an Appointment</h2>
+    <p class="form-card-sub">Fill in the details below to schedule a visit. A confirmation email will be sent to the owner.</p>
+
+    <form asp-controller="Appointment" asp-action="Create" method="post" novalidate>
+        <div asp-validation-summary="All" class="validation-summary"></div>
+
+        <div class="form-row form-row-3">
+            <div class="form-group">
+                <label asp-for="PetName"></label>
+                <input asp-for="PetName" class="form-control" placeholder="e.g. Toby" />
+                <span asp-validation-for="PetName" class="field-validation"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="OwnerName"></label>
+                <input asp-for="OwnerName" class="form-control" placeholder="e.g. James Lee" />
+                <span asp-validation-for="OwnerName" class="field-validation"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="ownerEmail">Owner Email (for confirmation)</label>
+                <input type="email" name="ownerEmail" id="ownerEmail" class="form-control" placeholder="owner@example.com" />
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label asp-for="Service"></label>
+                <input asp-for="Service" class="form-control" placeholder="e.g. Grooming" />
+                <span asp-validation-for="Service" class="field-validation"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="StaffId">Staff Member</label>
+                <select asp-for="StaffId" asp-items="ViewBag.StaffList" class="form-control">
+                    <option value="">-- Select staff --</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label asp-for="Date"></label>
+                <input asp-for="Date" class="form-control" type="datetime-local" />
+            </div>
+
+            <div class="form-group">
+                <label asp-for="DurationMinutes"></label>
+                <input asp-for="DurationMinutes" class="form-control" />
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-pc-accent">Confirm Booking</button>
+            <a class="btn btn-ghost" asp-controller="Appointment" asp-action="List">Cancel</a>
+        </div>
+    </form>
+</div>

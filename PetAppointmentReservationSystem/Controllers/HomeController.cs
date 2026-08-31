@@ -6,6 +6,8 @@ namespace PetAppointmentReservationSystem.Controllers
     {
         public IActionResult Index()
         {
+            ViewBag.Username = HttpContext.Session.GetString("Username");
+            ViewBag.Role = HttpContext.Session.GetString("Role");
             return View();
         }
     }

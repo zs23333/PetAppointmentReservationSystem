@@ -1,0 +1,43 @@
+﻿@model IEnumerable<PetAppointmentReservationSystem.Models.Pet>
+@{
+    ViewData["Title"] = "Pets";
+}
+
+<div class="calendar-header">
+    <div>
+        <h2>Registered Pets</h2>
+        <p class="muted">@Model.Count() pets on file</p>
+    </div>
+    <a class="btn btn-pc-accent" asp-controller="Pet" asp-action="Create">+ Add Pet</a>
+</div>
+
+<div class="pet-grid">
+    @foreach (var pet in Model)
+    {
+        <div class="pet-card">
+            @if (!string.IsNullOrEmpty(pet.PhotoPath))
+            {
+                <img src="@pet.PhotoPath" alt="@pet.Name" class="pet-photo" />
+            }
+            else
+            {
+                <div class="pet-photo pet-photo-placeholder">🐾</div>
+            }
+            <div class="pet-card-body">
+                <h3>@pet.Name</h3>
+                <p class="muted">@pet.Species @(string.IsNullOrEmpty(pet.Breed) ? "" : $"· {pet.Breed}")</p>
+                <p class="muted">Owner: @(pet.Owner?.Username ?? "Unknown")</p>
+                <div class="pet-card-actions">
+                    <a class="btn btn-sm btn-outline-light" asp-controller="Pet" asp-action="Edit" asp-route-id="@pet.PetId">Edit</a>
+                    <form asp-controller="Pet" asp-action="Delete" asp-route-id="@pet.PetId" method="post" class="d-inline" onsubmit="return confirm('Delete this pet?');">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+    @if (!Model.Any())
+    {
+        <p class="text-muted">No pets registered yet.</p>
+    }
+</div>
