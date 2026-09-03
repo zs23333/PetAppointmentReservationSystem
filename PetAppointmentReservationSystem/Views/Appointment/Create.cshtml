@@ -5,33 +5,39 @@
 
 <div class="form-card form-card-wide">
     <h2>Book an Appointment</h2>
-    <p class="form-card-sub">Choose a registered pet, or enter a new pet's name to add it automatically.</p>
+    <p class="form-card-sub">Choose a registered pet, or register a new one with a photo right here.</p>
 
-    <form asp-controller="Appointment" asp-action="Create" method="post" novalidate>
+    <form asp-controller="Appointment" asp-action="Create" method="post" enctype="multipart/form-data" novalidate>
         <div asp-validation-summary="All" class="validation-summary"></div>
 
         <div class="form-row">
             <div class="form-group">
                 <label asp-for="PetId">Your Pet</label>
-                <select asp-for="PetId" asp-items="ViewBag.PetList" class="form-control">
-                    <option value="0">-- Select a registered pet --</option>
+                <select asp-for="PetId" asp-items="ViewBag.PetList" class="form-control" id="petSelect">
+                    <option value="0">-- Register a new pet below --</option>
                 </select>
-            </div>
-
-            <div class="form-group">
-                <label>Or Register a New Pet</label>
-                <input type="text" name="newPetName" class="form-control" placeholder="New pet's name (optional)" />
             </div>
         </div>
 
-        <div class="form-row">
-            <div class="form-group">
-                <label>New Pet Species</label>
-                <input type="text" name="newPetSpecies" class="form-control" placeholder="e.g. Dog (optional)" />
+        <div id="newPetFields" class="pc-inline-panel">
+            <p class="muted">New pet details (photo required)</p>
+            <div class="form-row form-row-3">
+                <div class="form-group">
+                    <label>Pet Name</label>
+                    <input type="text" name="newPetName" class="form-control" placeholder="e.g. Toby" />
+                </div>
+                <div class="form-group">
+                    <label>Species</label>
+                    <input type="text" name="newPetSpecies" class="form-control" placeholder="e.g. Dog" />
+                </div>
+                <div class="form-group">
+                    <label>Breed</label>
+                    <input type="text" name="newPetBreed" class="form-control" placeholder="e.g. Poodle" />
+                </div>
             </div>
             <div class="form-group">
-                <label>New Pet Breed</label>
-                <input type="text" name="newPetBreed" class="form-control" placeholder="e.g. Poodle (optional)" />
+                <label for="newPetPhoto">Photo (JPG/PNG, max 5MB) <span class="text-danger">*</span></label>
+                <input type="file" name="newPetPhoto" id="newPetPhoto" class="form-control" accept=".jpg,.jpeg,.png" />
             </div>
         </div>
 
@@ -49,6 +55,7 @@
                 <select asp-for="StaffId" asp-items="ViewBag.StaffList" class="form-control">
                     <option value="">-- Select staff --</option>
                 </select>
+                <span asp-validation-for="StaffId" class="field-validation"></span>
             </div>
         </div>
 
@@ -56,11 +63,13 @@
             <div class="form-group">
                 <label asp-for="Date"></label>
                 <input asp-for="Date" class="form-control" type="datetime-local" />
+                <span asp-validation-for="Date" class="field-validation"></span>
             </div>
 
             <div class="form-group">
                 <label asp-for="DurationMinutes"></label>
                 <input asp-for="DurationMinutes" class="form-control" />
+                <span asp-validation-for="DurationMinutes" class="field-validation"></span>
             </div>
         </div>
 
@@ -70,3 +79,18 @@
         </div>
     </form>
 </div>
+
+@section Scripts {
+    <script>
+        // Show/hide the inline "new pet" fields depending on the dropdown selection.
+        const petSelect = document.getElementById('petSelect');
+        const newPetFields = document.getElementById('newPetFields');
+
+        function toggleNewPetFields() {
+            newPetFields.style.display = petSelect.value === '0' ? 'block' : 'none';
+        }
+
+        petSelect.addEventListener('change', toggleNewPetFields);
+        toggleNewPetFields();
+    </script>
+}

@@ -17,17 +17,38 @@ namespace PetAppointmentReservationSystem.Controllers
             _context = context;
         }
 
-        // Consolidated staff view — every appointment, across every customer.
         public IActionResult Index()
         {
-            var appointments = _context.Appointments
+            var appointments = GetAllAppointments();
+            return View(appointments);
+        }
+
+        // AJAX endpoint: filtered rows for staff search/filter box.
+        [HttpGet]
+        public IActionResult Search(string q)
+        {
+            var appointments = GetAllAppointments(q);
+            return PartialView("_ManageAppointmentRows", appointments);
+        }
+
+        private List<Appointment> GetAllAppointments(string q = null)
+        {
+            var query = _context.Appointments
                 .Include(a => a.Staff)
                 .Include(a => a.Pet)
                     .ThenInclude(p => p.Owner)
-                .OrderBy(a => a.Date)
-                .ToList();
+                .AsQueryable();
 
-            return View(appointments);
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                query = query.Where(a =>
+                    a.Pet.Name.Contains(q) ||
+                    a.Service.Contains(q) ||
+                    (a.Staff != null && a.Staff.Name.Contains(q)) ||
+                    (a.Pet.Owner != null && a.Pet.Owner.Username.Contains(q)));
+            }
+
+            return query.OrderBy(a => a.Date).ToList();
         }
 
         [HttpGet]
@@ -67,14 +88,14 @@ namespace PetAppointmentReservationSystem.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Cancel(int id)
+        public IActionResult Delete(int id)
         {
             var appointment = _context.Appointments.Find(id);
             if (appointment != null)
             {
                 _context.Appointments.Remove(appointment);
                 _context.SaveChanges();
-                TempData["Message"] = "Appointment cancelled.";
+                TempData["Message"] = "Appointment deleted.";
             }
 
             return RedirectToAction(nameof(Index));

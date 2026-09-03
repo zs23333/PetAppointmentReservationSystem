@@ -43,6 +43,7 @@
                 @if (isStaff)
                 {
                     <a class="nav-link @(ctrl == "ManageAppointments" ? "active" : "")" asp-controller="ManageAppointments" asp-action="Index">Manage Appointments</a>
+                    <a class="nav-link @(ctrl == "Reports" ? "active" : "")" asp-controller="Reports" asp-action="Index">Reports</a>
                 }
             </nav>
 

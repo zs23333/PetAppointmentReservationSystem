@@ -7,13 +7,13 @@ namespace PetAppointmentReservationSystem.Models
         public int StaffId { get; set; }
 
         [Required]
+        [StringLength(100)]
         public string Name { get; set; }
 
         [Required]
-        public string Role { get; set; } // e.g. "Staff", "Veterinarian", "Groomer"
+        [StringLength(50)]
+        public string Role { get; set; }
 
-        // Links back to the login account that created this staff row (nullable —
-        // seeded/legacy staff rows won't have a matching User).
         public int? UserId { get; set; }
 
         public ICollection<Appointment> Appointments { get; set; }

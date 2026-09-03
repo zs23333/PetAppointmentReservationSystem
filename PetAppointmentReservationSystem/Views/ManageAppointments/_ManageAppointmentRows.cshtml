@@ -1,0 +1,25 @@
+﻿@model IEnumerable<PetAppointmentReservationSystem.Models.Appointment>
+
+@foreach (var appt in Model)
+{
+    <tr>
+        <td><strong>@appt.Pet?.Name</strong></td>
+        <td>@(appt.Pet?.Owner?.Username ?? "Unknown")</td>
+        <td>@appt.Service</td>
+        <td>@(appt.Staff?.Name ?? "Unassigned")</td>
+        <td>@appt.Date.ToString("MMM d, yyyy h:mm tt")</td>
+        <td>@appt.DurationMinutes min</td>
+        <td class="text-end">
+            <a class="btn btn-sm btn-outline-light" asp-controller="ManageAppointments" asp-action="Edit" asp-route-id="@appt.AppointmentId">Edit</a>
+            <form asp-controller="ManageAppointments" asp-action="Delete" asp-route-id="@appt.AppointmentId" method="post" class="d-inline" onsubmit="return confirm('Delete this appointment?');">
+                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+            </form>
+        </td>
+    </tr>
+}
+@if (!Model.Any())
+{
+    <tr>
+        <td colspan="7" class="text-center text-muted py-4">No matching appointments.</td>
+    </tr>
+}

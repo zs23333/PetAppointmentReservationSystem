@@ -8,16 +8,15 @@ namespace PetAppointmentReservationSystem.Models
         public int PetId { get; set; }
 
         [Required]
+        [StringLength(50)]
         public string Name { get; set; }
 
+        [StringLength(50)]
         public string Species { get; set; }
 
+        [StringLength(50)]
         public string Breed { get; set; }
 
-        // Required so a pet can't exist without a photo. Note: since the photo itself
-        // arrives as an IFormFile (not bound directly to this string), the controller
-        // validates file presence manually and only then fills PhotoPath — see
-        // PetController.Create for how this attribute is actually enforced.
         [Required(ErrorMessage = "A photo is required to register a pet.")]
         public string PhotoPath { get; set; }
 

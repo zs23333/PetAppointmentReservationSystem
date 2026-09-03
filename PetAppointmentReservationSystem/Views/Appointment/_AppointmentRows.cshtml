@@ -1,0 +1,18 @@
+﻿@model IEnumerable<PetAppointmentReservationSystem.Models.Appointment>
+
+@foreach (var appt in Model)
+{
+    <tr>
+        <td><strong>@appt.Pet?.Name</strong></td>
+        <td>@appt.Service</td>
+        <td>@(appt.Staff?.Name ?? "Unassigned")</td>
+        <td>@appt.Date.ToString("MMM d, yyyy h:mm tt")</td>
+        <td>@appt.DurationMinutes min</td>
+    </tr>
+}
+@if (!Model.Any())
+{
+    <tr>
+        <td colspan="5" class="text-center text-muted py-4">No matching appointments.</td>
+    </tr>
+}

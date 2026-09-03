@@ -1,0 +1,89 @@
+﻿@model PetAppointmentReservationSystem.Models.ReportsVM
+@{
+    ViewData["Title"] = "Reports & Analytics";
+}
+
+<div class="calendar-header">
+    <div>
+        <h2>Reports &amp; Analytics</h2>
+        <p class="muted">Overview of appointments, services, and activity</p>
+    </div>
+</div>
+
+<div class="report-stats">
+    <div class="stat-card">
+        <span class="stat-number">@Model.TotalAppointments</span>
+        <span class="stat-label">Total Appointments</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-number">@Model.TotalPets</span>
+        <span class="stat-label">Registered Pets</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-number">@Model.TotalCustomers</span>
+        <span class="stat-label">Customers</span>
+    </div>
+</div>
+
+<div class="report-charts">
+    <div class="pc-table-wrap p-4">
+        <h3>Appointments per Month</h3>
+        <canvas id="monthChart"></canvas>
+    </div>
+
+    <div class="pc-table-wrap p-4">
+        <h3>Top Services</h3>
+        <canvas id="serviceChart"></canvas>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script>
+        const monthLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.MonthLabels));
+        const monthCounts = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.MonthCounts));
+        const serviceLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ServiceLabels));
+        const serviceCounts = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ServiceCounts));
+
+        new Chart(document.getElementById('monthChart'), {
+            type: 'line',
+            data: {
+                labels: monthLabels,
+                datasets: [{
+                    label: 'Appointments',
+                    data: monthCounts,
+                    borderColor: '#2dd4bf',
+                    backgroundColor: 'rgba(45, 212, 191, 0.15)',
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                scales: {
+                    x: { ticks: { color: '#8ba3a1' }, grid: { color: '#1f2b30' } },
+                    y: { ticks: { color: '#8ba3a1' }, grid: { color: '#1f2b30' }, beginAtZero: true }
+                },
+                plugins: { legend: { labels: { color: '#eaf2f1' } } }
+            }
+        });
+
+        new Chart(document.getElementById('serviceChart'), {
+            type: 'bar',
+            data: {
+                labels: serviceLabels,
+                datasets: [{
+                    label: 'Bookings',
+                    data: serviceCounts,
+                    backgroundColor: ['#2dd4bf', '#f2a154', '#8f6cff']
+                }]
+            },
+            options: {
+                scales: {
+                    x: { ticks: { color: '#8ba3a1' }, grid: { color: '#1f2b30' } },
+                    y: { ticks: { color: '#8ba3a1' }, grid: { color: '#1f2b30' }, beginAtZero: true }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+    </script>
+}

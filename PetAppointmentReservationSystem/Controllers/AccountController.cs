@@ -40,7 +40,7 @@ namespace PetAppointmentReservationSystem.Controllers
             var user = new User
             {
                 Username = model.Username,
-                Password = model.Password, // NOTE: hash this in a real deployment
+                Password = model.Password,
                 Email = model.Email,
                 Role = model.Role
             };
@@ -48,8 +48,8 @@ namespace PetAppointmentReservationSystem.Controllers
             _context.Users.Add(user);
             _context.SaveChanges();
 
-            // Requirement: staff registrations automatically populate the Staff table
-            // so they show up in the appointment-booking dropdown with no manual seeding.
+            // Staff auto-insert: new staff appear in the appointment dropdown immediately,
+            // no manual seeding required.
             if (model.Role == "Staff")
             {
                 var alreadyStaff = _context.StaffMembers.Any(s => s.UserId == user.UserId);
@@ -106,11 +106,6 @@ namespace PetAppointmentReservationSystem.Controllers
                 new ClaimsPrincipal(identity),
                 new AuthenticationProperties { IsPersistent = model.RememberMe });
 
-            // Session kept alongside claims auth for any legacy session-based reads elsewhere.
-            HttpContext.Session.SetString("Username", user.Username);
-            HttpContext.Session.SetString("Role", user.Role);
-            HttpContext.Session.SetInt32("UserId", user.UserId);
-
             TempData["Message"] = $"Welcome back, {user.Username}!";
             return RedirectToAction("Index", "Home");
         }
@@ -118,7 +113,6 @@ namespace PetAppointmentReservationSystem.Controllers
         public async Task<IActionResult> Logout()
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            HttpContext.Session.Clear();
             TempData["Message"] = "You have been logged out.";
             return RedirectToAction("Index", "Home");
         }

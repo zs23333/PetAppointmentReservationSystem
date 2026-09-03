@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PetAppointmentReservationSystem.Models;
 
@@ -11,9 +12,11 @@ using PetAppointmentReservationSystem.Models;
 namespace PetAppointmentReservationSystem.Migrations
 {
     [DbContext(typeof(PetConnectContext))]
-    partial class PetConnectContextModelSnapshot : ModelSnapshot
+    [Migration("20260831123843_AddValidationConstraints")]
+    partial class AddValidationConstraints
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

@@ -10,12 +10,16 @@
     </div>
 </div>
 
+<div class="form-group" style="width:100%; max-width:360px;">
+    <input type="text" id="searchBox" class="form-control" placeholder="Search by pet, owner, service, or staff..." />
+</div>
+
 <div class="table-responsive pc-table-wrap">
     <table class="table table-dark table-hover align-middle mb-0">
         <thead>
             <tr>
                 <th>Pet</th>
-                <th>Owner</th>
+                <th>Customer</th>
                 <th>Service</th>
                 <th>Staff</th>
                 <th>Date &amp; Time</th>
@@ -23,30 +27,24 @@
                 <th class="text-end">Actions</th>
             </tr>
         </thead>
-        <tbody>
-            @foreach (var appt in Model)
-            {
-                <tr>
-                    <td><strong>@appt.Pet?.Name</strong></td>
-                    <td>@(appt.Pet?.Owner?.Username ?? "Unknown")</td>
-                    <td>@appt.Service</td>
-                    <td>@(appt.Staff?.Name ?? "Unassigned")</td>
-                    <td>@appt.Date.ToString("MMM d, yyyy h:mm tt")</td>
-                    <td>@appt.DurationMinutes min</td>
-                    <td class="text-end">
-                        <a class="btn btn-sm btn-outline-light" asp-controller="ManageAppointments" asp-action="Edit" asp-route-id="@appt.AppointmentId">Edit</a>
-                        <form asp-controller="ManageAppointments" asp-action="Cancel" asp-route-id="@appt.AppointmentId" method="post" class="d-inline" onsubmit="return confirm('Cancel this appointment?');">
-                            <button type="submit" class="btn btn-sm btn-outline-danger">Cancel</button>
-                        </form>
-                    </td>
-                </tr>
-            }
-            @if (!Model.Any())
-            {
-                <tr>
-                    <td colspan="7" class="text-center text-muted py-4">No appointments in the system yet.</td>
-                </tr>
-            }
+        <tbody id="appointmentRows">
+            @await Html.PartialAsync("_ManageAppointmentRows", Model)
         </tbody>
     </table>
 </div>
+
+@section Scripts {
+    <script>
+        const searchBox = document.getElementById('searchBox');
+        let debounceTimer;
+
+        searchBox.addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(function() {
+                fetch('/ManageAppointments/Search?q=' + encodeURIComponent(searchBox.value))
+                    .then(res => res.text())
+                    .then(html => { document.getElementById('appointmentRows').innerHTML = html; });
+            }, 300);
+        });
+    </script>
+}

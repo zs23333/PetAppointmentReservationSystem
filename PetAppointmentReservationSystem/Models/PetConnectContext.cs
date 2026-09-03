@@ -9,6 +9,8 @@ namespace PetAppointmentReservationSystem.Models
         }
 
         public DbSet<User> Users { get; set; }
+        public DbSet<Service> Services { get; set; }
+
         public DbSet<Staff> StaffMembers { get; set; }
         public DbSet<Pet> Pets { get; set; }
         public DbSet<Appointment> Appointments { get; set; }

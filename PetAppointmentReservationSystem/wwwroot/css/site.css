@@ -599,3 +599,35 @@ h1, h2, h3 {
         font-size: 1.7rem;
     }
 }
+
+/* ---------- Inline new-pet panel (Appointment/Create) ---------- */
+.pc-inline-panel {
+    background: var(--bg-secondary);
+    border: 1px dashed var(--border-color);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+/* ---------- Reports ---------- */
+.report-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    width: 100%;
+    margin-bottom: 24px;
+}
+
+.report-charts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    width: 100%;
+}
+
+@media (max-width: 900px) {
+    .report-stats,
+    .report-charts {
+        grid-template-columns: 1fr;
+    }
+}

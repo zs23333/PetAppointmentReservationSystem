@@ -14,6 +14,7 @@ namespace PetAppointmentReservationSystem.Models
         [ForeignKey(nameof(PetId))]
         public Pet Pet { get; set; }
 
+        [Required]
         [Display(Name = "Staff Member")]
         public int StaffId { get; set; }
 
@@ -21,6 +22,7 @@ namespace PetAppointmentReservationSystem.Models
         public Staff Staff { get; set; }
 
         [Required]
+        [StringLength(50)]
         [Display(Name = "Service")]
         public string Service { get; set; }
 

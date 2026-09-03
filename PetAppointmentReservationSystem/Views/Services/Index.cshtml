@@ -1,0 +1,42 @@
+﻿@model IEnumerable<PetAppointmentReservationSystem.Models.Service>
+@{
+    ViewData["Title"] = "Services";
+}
+
+<div class="calendar-header">
+    <div>
+        <h2>Our Services</h2>
+        <p class="muted">Click a service to book it directly</p>
+    </div>
+    @if (User.IsInRole("Staff"))
+    {
+        <a class="btn btn-pc-accent" asp-controller="Services" asp-action="Create">+ Add Service</a>
+    }
+</div>
+
+<div class="quick-links-grid">
+    @foreach (var svc in Model)
+    {
+        <div class="quick-card service-card" style="cursor:pointer;"
+             onclick="location.href='@Url.Action("Create", "Appointment", new { serviceId = svc.ServiceId })'">
+            @if (!string.IsNullOrEmpty(svc.PhotoPath))
+            {
+                <img src="@svc.PhotoPath" alt="@svc.Name" class="pet-photo" style="height:100px; border-radius:8px; margin-bottom:8px;" />
+            }
+            <h3>@svc.Name</h3>
+            <p>@svc.Description</p>
+            <p class="muted">$@svc.Price.ToString("F2") · @svc.DurationMinutes min</p>
+            <span class="quick-arrow">Book This Service →</span>
+
+            @if (User.IsInRole("Staff"))
+            {
+                <div class="pet-card-actions" onclick="event.stopPropagation();">
+                    <a class="btn btn-sm btn-outline-light" asp-controller="Services" asp-action="Edit" asp-route-id="@svc.ServiceId">Edit</a>
+                    <form asp-controller="Services" asp-action="Delete" asp-route-id="@svc.ServiceId" method="post" class="d-inline" onsubmit="return confirm('Delete this service?');">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                    </form>
+                </div>
+            }
+        </div>
+    }
+</div>

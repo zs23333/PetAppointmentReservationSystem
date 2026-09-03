@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using PetAppointmentReservationSystem.Helpers;
 using PetAppointmentReservationSystem.Models;
-using System.IO;
 using System.Linq;
 using System.Security.Claims;
 
@@ -27,7 +27,10 @@ namespace PetAppointmentReservationSystem.Controllers
 
         public IActionResult Index()
         {
-            var pets = _context.Pets.Where(p => p.OwnerId == CurrentUserId).ToList();
+            var pets = _context.Pets
+                .Where(p => p.OwnerId == CurrentUserId)
+                .Include(p => p.Owner)
+                .ToList();
             return View(pets);
         }
 
@@ -41,14 +44,13 @@ namespace PetAppointmentReservationSystem.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Create(Pet model, IFormFile photo)
         {
-            // PhotoPath isn't submitted directly (it's derived from the uploaded file),
-            // so remove it from binding validation and check the actual file instead —
-            // this is what makes the [Required] on Pet.PhotoPath meaningfully enforced.
             ModelState.Remove(nameof(Pet.PhotoPath));
+            ModelState.Remove(nameof(Pet.OwnerId));
+            ModelState.Remove(nameof(Pet.Owner));
 
-            if (photo == null || photo.Length == 0)
+            if (!PhotoHelper.IsValidPhoto(photo, out var photoError))
             {
-                ModelState.AddModelError(string.Empty, "A photo is required to register a pet.");
+                ModelState.AddModelError(string.Empty, photoError);
             }
 
             if (!ModelState.IsValid)
@@ -56,8 +58,8 @@ namespace PetAppointmentReservationSystem.Controllers
                 return View(model);
             }
 
-            model.OwnerId = CurrentUserId;
-            model.PhotoPath = SavePhoto(photo);
+            model.OwnerId = CurrentUserId; // links to the logged-in AppUser
+            model.PhotoPath = PhotoHelper.SavePhoto(photo, _env);
 
             _context.Pets.Add(model);
             _context.SaveChanges();
@@ -94,22 +96,27 @@ namespace PetAppointmentReservationSystem.Controllers
                 return NotFound();
             }
 
-            // Keep [Required] meaningful on Edit too: only demand a NEW photo if
-            // there's no existing photo to fall back on.
             ModelState.Remove(nameof(Pet.PhotoPath));
+            ModelState.Remove(nameof(Pet.OwnerId));
+            ModelState.Remove(nameof(Pet.Owner));
+
             model.PhotoPath = existing.PhotoPath;
             model.OwnerId = existing.OwnerId;
 
-            if (photo == null || photo.Length == 0)
+            if (photo != null && photo.Length > 0)
             {
-                if (string.IsNullOrEmpty(existing.PhotoPath))
+                if (!PhotoHelper.IsValidPhoto(photo, out var photoError))
                 {
-                    ModelState.AddModelError(string.Empty, "A photo is required.");
+                    ModelState.AddModelError(string.Empty, photoError);
+                }
+                else
+                {
+                    model.PhotoPath = PhotoHelper.SavePhoto(photo, _env);
                 }
             }
-            else
+            else if (string.IsNullOrEmpty(existing.PhotoPath))
             {
-                model.PhotoPath = SavePhoto(photo);
+                ModelState.AddModelError(string.Empty, "A photo is required.");
             }
 
             if (!ModelState.IsValid)
@@ -137,19 +144,6 @@ namespace PetAppointmentReservationSystem.Controllers
             }
 
             return RedirectToAction(nameof(Index));
-        }
-
-        private string SavePhoto(IFormFile photo)
-        {
-            var fileName = Guid.NewGuid() + Path.GetExtension(photo.FileName);
-            var uploadsFolder = Path.Combine(_env.WebRootPath, "images", "pets");
-            Directory.CreateDirectory(uploadsFolder);
-            var filePath = Path.Combine(uploadsFolder, fileName);
-
-            using var stream = new FileStream(filePath, FileMode.Create);
-            photo.CopyTo(stream);
-
-            return "/images/pets/" + fileName;
         }
     }
 }
