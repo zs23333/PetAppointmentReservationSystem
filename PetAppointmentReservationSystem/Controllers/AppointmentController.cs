@@ -59,10 +59,16 @@ namespace PetAppointmentReservationSystem.Controllers
         }
 
         [HttpGet]
-        public IActionResult Create()
+        public IActionResult Create(string service)
         {
             PopulateDropdowns();
-            return View(new Appointment { Date = DateTime.Today.AddHours(9), DurationMinutes = 30 });
+            var model = new Appointment
+            {
+                Date = DateTime.Today.AddHours(9),
+                DurationMinutes = 30,
+                Service = service // prefills the dropdown/field if passed from a Services card click
+            };
+            return View(model);
         }
 
         [HttpPost]
@@ -144,7 +150,8 @@ namespace PetAppointmentReservationSystem.Controllers
             var staff = _context.StaffMembers.OrderBy(s => s.Name).ToList();
             ViewBag.StaffList = new SelectList(staff, "StaffId", "Name", selectedStaffId);
 
-            ViewBag.ServiceList = new SelectList(ServiceCatalog.Services);
+            var services = new List<string> { "Grooming", "Vaccination", "Checkup" };
+ViewBag.ServiceList = new SelectList(services);
         }
     }
 }

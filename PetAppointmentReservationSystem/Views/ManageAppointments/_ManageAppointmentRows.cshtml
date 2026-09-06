@@ -3,6 +3,17 @@
 @foreach (var appt in Model)
 {
     <tr>
+        <td>
+            @if (!string.IsNullOrEmpty(appt.Pet?.PhotoPath))
+            {
+                <img src="@appt.Pet.PhotoPath" alt="@appt.Pet.Name"
+                     style="width:40px; height:40px; object-fit:cover; border-radius:6px; pointer-events:none;" />
+            }
+            else
+            {
+                <div style="width:40px; height:40px; border-radius:6px; background:var(--bg-secondary); display:flex; align-items:center; justify-content:center; font-size:0.9rem;">🐾</div>
+            }
+        </td>
         <td><strong>@appt.Pet?.Name</strong></td>
         <td>@(appt.Pet?.Owner?.Username ?? "Unknown")</td>
         <td>@appt.Service</td>
@@ -10,6 +21,7 @@
         <td>@appt.Date.ToString("MMM d, yyyy h:mm tt")</td>
         <td>@appt.DurationMinutes min</td>
         <td class="text-end">
+            <a class="btn btn-sm btn-outline-light" asp-controller="ManageAppointments" asp-action="PetDetails" asp-route-id="@appt.Pet.PetId">View Pet</a>
             <a class="btn btn-sm btn-outline-light" asp-controller="ManageAppointments" asp-action="Edit" asp-route-id="@appt.AppointmentId">Edit</a>
             <form asp-controller="ManageAppointments" asp-action="Delete" asp-route-id="@appt.AppointmentId" method="post" class="d-inline" onsubmit="return confirm('Delete this appointment?');">
                 <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
@@ -20,6 +32,6 @@
 @if (!Model.Any())
 {
     <tr>
-        <td colspan="7" class="text-center text-muted py-4">No matching appointments.</td>
+        <td colspan="8" class="text-center text-muted py-4">No matching appointments.</td>
     </tr>
 }

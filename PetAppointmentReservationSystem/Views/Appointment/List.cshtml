@@ -15,22 +15,34 @@
     <input type="text" id="searchBox" class="form-control" placeholder="Search by pet, service, or staff..." />
 </div>
 
-<div class="table-responsive pc-table-wrap">
-    <table class="table table-dark table-hover align-middle mb-0">
-        <thead>
-            <tr>
-                <th>Pet</th>
-                <th>Service</th>
-                <th>Staff</th>
-                <th>Date &amp; Time</th>
-                <th>Duration</th>
-            </tr>
-        </thead>
-        <tbody id="appointmentRows">
-            @await Html.PartialAsync("_AppointmentRows", Model)
-        </tbody>
-    </table>
+<div class="d-flex gap-2 mb-3">
+    <button type="button" class="btn btn-sm btn-outline-light" id="viewTableBtn" onclick="showView('table')">Table</button>
+    <button type="button" class="btn btn-sm btn-outline-light" id="viewCalendarBtn" onclick="showView('calendar')">Calendar</button>
+    <button type="button" class="btn btn-sm btn-outline-light ms-auto" onclick="window.print()">Export as PDF</button>
 </div>
+
+<div id="tableView">
+    <div class="table-responsive pc-table-wrap">
+        <table class="table table-dark table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Photo</th>
+                    <th>Pet</th>
+                    <th>Service</th>
+                    <th>Staff</th>
+                    <th>Date &amp; Time</th>
+                    <th>Duration</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="appointmentRows">
+                @await Html.PartialAsync("_AppointmentRows", Model)
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="calendarView" class="pc-table-wrap p-3" style="display:none;"></div>
 
 @section Scripts {
     <script>
@@ -42,8 +54,53 @@
             debounceTimer = setTimeout(function() {
                 fetch('/Appointment/Search?q=' + encodeURIComponent(searchBox.value))
                     .then(res => res.text())
-                    .then(html => { document.getElementById('appointmentRows').innerHTML = html; });
+                    .then(html => {
+                        document.getElementById('appointmentRows').innerHTML = html;
+                    });
             }, 300);
         });
+
+        function showView(mode) {
+            document.getElementById('tableView').style.display = mode === 'table' ? 'block' : 'none';
+            document.getElementById('calendarView').style.display = mode === 'calendar' ? 'block' : 'none';
+            if (mode === 'calendar') buildCalendar();
+        }
+
+        function buildCalendar() {
+            const rows = document.querySelectorAll('#tableView tbody tr');
+            const byDate = {};
+
+            rows.forEach(r => {
+                const cells = r.children;
+                if (cells.length < 5) return;
+
+                const petName = cells[1]?.textContent.trim();
+                const serviceName = cells[2]?.textContent.trim();
+                const dateTimeText = cells[4]?.textContent.trim();
+                if (!dateTimeText) return;
+
+                const dateLabel = dateTimeText.split(',').slice(0, 2).join(',').trim();
+                const timeLabel = dateTimeText.split(',').slice(2).join(',').trim() || dateTimeText;
+
+                byDate[dateLabel] = byDate[dateLabel] || [];
+                byDate[dateLabel].push(`${timeLabel} — ${petName} (${serviceName})`);
+            });
+
+            const container = document.getElementById('calendarView');
+            container.innerHTML = '';
+
+            const dates = Object.keys(byDate);
+            if (dates.length === 0) {
+                container.innerHTML = '<p class="muted">No appointments to display.</p>';
+                return;
+            }
+
+            dates.forEach(date => {
+                const block = document.createElement('div');
+                block.className = 'calendar-day-block';
+                block.innerHTML = `<strong>${date}</strong><ul>${byDate[date].map(entry => `<li>${entry}</li>`).join('')}</ul>`;
+                container.appendChild(block);
+            });
+        }
     </script>
 }

@@ -1,0 +1,25 @@
+﻿@model PetAppointmentReservationSystem.Models.Pet
+@{
+    ViewData["Title"] = Model.Name;
+}
+
+<div class="form-card form-card-wide">
+    <h2>@Model.Name</h2>
+    <p class="muted">
+        @Model.Species@(string.IsNullOrEmpty(Model.Breed) ? "" : $" · {Model.Breed}")
+    </p>
+
+    <div class="pet-photo-gallery">
+        <img src="@Model.PhotoPath" class="pet-photo-preview" alt="@Model.Name (main photo)" />
+
+        @foreach (var photo in Model.Photos)
+        {
+            <img src="@photo.PhotoPath" class="pet-photo-preview" alt="@Model.Name" />
+        }
+    </div>
+
+    <div class="form-actions">
+        <a class="btn btn-outline-light" asp-controller="Pet" asp-action="Edit" asp-route-id="@Model.PetId">Edit Pet</a>
+        <a class="btn btn-ghost" asp-controller="Pet" asp-action="Index">Back to My Pets</a>
+    </div>
+</div>

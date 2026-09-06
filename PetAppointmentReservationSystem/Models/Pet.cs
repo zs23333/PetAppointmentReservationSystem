@@ -17,12 +17,16 @@ namespace PetAppointmentReservationSystem.Models
         [StringLength(50)]
         public string Breed { get; set; }
 
-        [Required(ErrorMessage = "A photo is required to register a pet.")]
+        // First/primary photo — shown in list views.
+        [Required(ErrorMessage = "At least one photo is required to register a pet.")]
         public string PhotoPath { get; set; }
 
         public int OwnerId { get; set; }
 
         [ForeignKey(nameof(OwnerId))]
         public User Owner { get; set; }
+
+        // Any additional photos beyond the primary one.
+        public ICollection<PetPhoto> Photos { get; set; } = new List<PetPhoto>();
     }
 }

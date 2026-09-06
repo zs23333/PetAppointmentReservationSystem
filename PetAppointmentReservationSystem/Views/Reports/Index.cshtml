@@ -3,10 +3,13 @@
     ViewData["Title"] = "Reports & Analytics";
 }
 
-<div class="calendar-header">
+<div class="calendar-header d-flex justify-content-between align-items-center mb-3">
     <div>
         <h2>Reports &amp; Analytics</h2>
         <p class="muted">Overview of appointments, services, and activity</p>
+    </div>
+    <div>
+        <button class="btn btn-success" onclick="window.print()">Export Reports as PDF</button>
     </div>
 </div>
 
@@ -31,7 +34,7 @@
         <canvas id="monthChart"></canvas>
     </div>
 
-    <div class="pc-table-wrap p-4">
+    <div class="pc-table-wrap p-4" style="page-break-before: always;">
         <h3>Top Services</h3>
         <canvas id="serviceChart"></canvas>
     </div>

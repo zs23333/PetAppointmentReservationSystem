@@ -1,4 +1,4 @@
-﻿@model IEnumerable<PetAppointmentReservationSystem.Models.Service>
+﻿@model List<PetAppointmentReservationSystem.Models.ServiceCardVM>
 @{
     ViewData["Title"] = "Services";
 }
@@ -6,37 +6,54 @@
 <div class="calendar-header">
     <div>
         <h2>Our Services</h2>
-        <p class="muted">Click a service to book it directly</p>
+        <p class="muted">Choose a service to book an appointment</p>
     </div>
-    @if (User.IsInRole("Staff"))
-    {
-        <a class="btn btn-pc-accent" asp-controller="Services" asp-action="Create">+ Add Service</a>
-    }
 </div>
 
-<div class="quick-links-grid">
+<div class="d-flex gap-2 mb-3">
+    <button type="button" class="btn btn-sm btn-outline-light" onclick="window.print()">Export as PDF</button>
+</div>
+
+<div class="form-group" style="width:100%; max-width:420px;">
+    <input type="text" id="serviceSearch" class="form-control" placeholder="Search services..." />
+</div>
+
+<div class="quick-links-grid" id="serviceGrid">
     @foreach (var svc in Model)
     {
-        <div class="quick-card service-card" style="cursor:pointer;"
-             onclick="location.href='@Url.Action("Create", "Appointment", new { serviceId = svc.ServiceId })'">
-            @if (!string.IsNullOrEmpty(svc.PhotoPath))
-            {
-                <img src="@svc.PhotoPath" alt="@svc.Name" class="pet-photo" style="height:100px; border-radius:8px; margin-bottom:8px;" />
-            }
+        <div class="quick-card service-card" data-name="@svc.Name.ToLower()">
+            <div class="service-icon-circle" style="background:@(svc.IconColor)22;">
+                <i class="bi @svc.IconClass" style="color:@svc.IconColor;"></i>
+            </div>
             <h3>@svc.Name</h3>
             <p>@svc.Description</p>
-            <p class="muted">$@svc.Price.ToString("F2") · @svc.DurationMinutes min</p>
-            <span class="quick-arrow">Book This Service →</span>
-
-            @if (User.IsInRole("Staff"))
-            {
-                <div class="pet-card-actions" onclick="event.stopPropagation();">
-                    <a class="btn btn-sm btn-outline-light" asp-controller="Services" asp-action="Edit" asp-route-id="@svc.ServiceId">Edit</a>
-                    <form asp-controller="Services" asp-action="Delete" asp-route-id="@svc.ServiceId" method="post" class="d-inline" onsubmit="return confirm('Delete this service?');">
-                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
-                    </form>
-                </div>
-            }
+            <a class="btn btn-pc-accent btn-block mt-2"
+               asp-controller="Appointment" asp-action="Create" asp-route-service="@svc.Name">
+                Book Appointment
+            </a>
         </div>
     }
 </div>
+
+<p id="noResultsMsg" class="muted text-center mt-4" style="display:none;">No services match your search.</p>
+
+@section Scripts {
+    <script>
+        const searchInput = document.getElementById('serviceSearch');
+        const cards = document.querySelectorAll('#serviceGrid .service-card');
+        const noResults = document.getElementById('noResultsMsg');
+
+        searchInput.addEventListener('input', function() {
+            const term = this.value.trim().toLowerCase();
+            let visibleCount = 0;
+
+            cards.forEach(card => {
+                const matches = card.dataset.name.includes(term);
+                card.style.display = matches ? '' : 'none';
+                if (matches) visibleCount++;
+            });
+
+            noResults.style.display = visibleCount === 0 ? 'block' : 'none';
+        });
+    </script>
+}

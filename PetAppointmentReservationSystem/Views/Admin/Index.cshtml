@@ -1,0 +1,46 @@
+﻿@model IEnumerable<PetAppointmentReservationSystem.Models.User>
+@{
+    ViewData["Title"] = "Pending Staff Approvals";
+}
+
+<div class="calendar-header">
+    <div>
+        <h2>Pending Staff Approvals</h2>
+        <p class="muted">@Model.Count() account(s) awaiting approval</p>
+    </div>
+</div>
+
+<div class="table-responsive pc-table-wrap">
+    <table class="table table-dark table-hover align-middle mb-0">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var u in Model)
+            {
+                <tr>
+                    <td>@u.FullName</td>
+                    <td>@u.Username</td>
+                    <td>@u.Email</td>
+                    <td class="text-end">
+                        <form asp-controller="Admin" asp-action="Approve" asp-route-id="@u.UserId" method="post" class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-pc-accent">Approve</button>
+                        </form>
+                        <form asp-controller="Admin" asp-action="Reject" asp-route-id="@u.UserId" method="post" class="d-inline" onsubmit="return confirm('Reject and delete this application?');">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Reject</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            @if (!Model.Any())
+            {
+                <tr><td colspan="4" class="text-center text-muted py-4">No pending approvals.</td></tr>
+            }
+        </tbody>
+    </table>
+</div>

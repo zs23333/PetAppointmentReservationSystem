@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace PetAppointmentReservationSystem.Views.Services
+namespace PetAppointmentReservationSystem.Views.ManageAppointments
 {
-    public class CreateModel : PageModel
+    public class PetDetailsModel : PageModel
     {
         public void OnGet()
         {

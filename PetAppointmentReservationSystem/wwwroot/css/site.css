@@ -609,6 +609,30 @@ h1, h2, h3 {
     margin-bottom: 16px;
 }
 
+/* ---------- Services page ---------- */
+.service-icon-circle {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+}
+
+    .service-icon-circle i {
+        font-size: 1.6rem;
+    }
+
+.service-card {
+    text-align: center;
+    align-items: center;
+}
+
+    .service-card .btn-block {
+        width: 100%;
+    }
+
 /* ---------- Reports ---------- */
 .report-stats {
     display: grid;
@@ -629,5 +653,31 @@ h1, h2, h3 {
     .report-stats,
     .report-charts {
         grid-template-columns: 1fr;
+    }
+}
+
+@media print {
+    .pc-sidebar,
+    .pc-topbar,
+    .btn,
+    form button,
+    #searchBox {
+        display: none !important;
+    }
+
+    body {
+        background: #fff !important;
+        color: #000 !important;
+    }
+
+    .pc-table-wrap,
+    .calendar-day-block {
+        border-color: #ccc !important;
+        box-shadow: none !important;
+    }
+
+    canvas {
+        max-width: 100% !important;
+        page-break-inside: avoid;
     }
 }

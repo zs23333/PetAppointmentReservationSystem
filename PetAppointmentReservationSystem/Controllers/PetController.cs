@@ -22,49 +22,73 @@ namespace PetAppointmentReservationSystem.Controllers
             _env = env;
         }
 
-        private int CurrentUserId =>
-            int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+        private int CurrentUserId => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
 
         public IActionResult Index()
         {
             var pets = _context.Pets
-                .Where(p => p.OwnerId == CurrentUserId)
                 .Include(p => p.Owner)
+                .Where(p => p.OwnerId == CurrentUserId)
                 .ToList();
             return View(pets);
         }
 
-        [HttpGet]
-        public IActionResult Create()
+        public IActionResult Details(int id)
         {
-            return View(new Pet());
+            var pet = _context.Pets.Include(p => p.Photos)
+                .FirstOrDefault(p => p.PetId == id && p.OwnerId == CurrentUserId);
+            if (pet == null) return NotFound();
+            return View(pet);
         }
+
+        [HttpGet]
+        public IActionResult Create() => View(new Pet());
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(Pet model, IFormFile photo)
+        public IActionResult Create(Pet model, List<IFormFile> photos)
         {
             ModelState.Remove(nameof(Pet.PhotoPath));
             ModelState.Remove(nameof(Pet.OwnerId));
             ModelState.Remove(nameof(Pet.Owner));
 
-            if (!PhotoHelper.IsValidPhoto(photo, out var photoError))
+            var validPhotos = photos?.Where(p => p != null && p.Length > 0).ToList() ?? new();
+
+            if (validPhotos.Count == 0)
             {
-                ModelState.AddModelError(string.Empty, photoError);
+                ModelState.AddModelError(string.Empty, "At least one photo is required.");
+            }
+            else
+            {
+                foreach (var p in validPhotos)
+                {
+                    if (!PhotoHelper.IsValidPhoto(p, out var err))
+                    {
+                        ModelState.AddModelError(string.Empty, err);
+                        break;
+                    }
+                }
             }
 
-            if (!ModelState.IsValid)
-            {
-                return View(model);
-            }
+            if (!ModelState.IsValid) return View(model);
 
-            model.OwnerId = CurrentUserId; // links to the logged-in AppUser
-            model.PhotoPath = PhotoHelper.SavePhoto(photo, _env);
+            model.OwnerId = CurrentUserId;
+            model.PhotoPath = PhotoHelper.SavePhoto(validPhotos[0], _env);
 
             _context.Pets.Add(model);
             _context.SaveChanges();
 
-            TempData["Message"] = $"{model.Name} has been added.";
+            foreach (var extra in validPhotos.Skip(1))
+            {
+                _context.PetPhotos.Add(new PetPhoto
+                {
+                    PetId = model.PetId,
+                    PhotoPath = PhotoHelper.SavePhoto(extra, _env)
+                });
+            }
+            _context.SaveChanges();
+
+            TempData["Message"] = $"{model.Name} has been added with {validPhotos.Count} photo(s).";
             return RedirectToAction(nameof(Index));
         }
 
@@ -72,29 +96,19 @@ namespace PetAppointmentReservationSystem.Controllers
         public IActionResult Edit(int id)
         {
             var pet = _context.Pets.FirstOrDefault(p => p.PetId == id && p.OwnerId == CurrentUserId);
-            if (pet == null)
-            {
-                return NotFound();
-            }
-
+            if (pet == null) return NotFound();
             return View(pet);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit(int id, Pet model, IFormFile photo)
+        public IActionResult Edit(int id, Pet model, List<IFormFile> photos)
         {
-            if (id != model.PetId)
-            {
-                return NotFound();
-            }
+            if (id != model.PetId) return NotFound();
 
             var existing = _context.Pets.AsNoTracking()
                 .FirstOrDefault(p => p.PetId == id && p.OwnerId == CurrentUserId);
-            if (existing == null)
-            {
-                return NotFound();
-            }
+            if (existing == null) return NotFound();
 
             ModelState.Remove(nameof(Pet.PhotoPath));
             ModelState.Remove(nameof(Pet.OwnerId));
@@ -103,28 +117,35 @@ namespace PetAppointmentReservationSystem.Controllers
             model.PhotoPath = existing.PhotoPath;
             model.OwnerId = existing.OwnerId;
 
-            if (photo != null && photo.Length > 0)
+            var validPhotos = photos?.Where(p => p != null && p.Length > 0).ToList() ?? new();
+
+            foreach (var p in validPhotos)
             {
-                if (!PhotoHelper.IsValidPhoto(photo, out var photoError))
+                if (!PhotoHelper.IsValidPhoto(p, out var err))
                 {
-                    ModelState.AddModelError(string.Empty, photoError);
+                    ModelState.AddModelError(string.Empty, err);
+                    break;
                 }
-                else
-                {
-                    model.PhotoPath = PhotoHelper.SavePhoto(photo, _env);
-                }
-            }
-            else if (string.IsNullOrEmpty(existing.PhotoPath))
-            {
-                ModelState.AddModelError(string.Empty, "A photo is required.");
             }
 
-            if (!ModelState.IsValid)
+            if (!ModelState.IsValid) return View(model);
+
+            if (validPhotos.Count > 0)
             {
-                return View(model);
+                model.PhotoPath = PhotoHelper.SavePhoto(validPhotos[0], _env);
             }
 
             _context.Pets.Update(model);
+            _context.SaveChanges();
+
+            foreach (var extra in validPhotos.Skip(1))
+            {
+                _context.PetPhotos.Add(new PetPhoto
+                {
+                    PetId = model.PetId,
+                    PhotoPath = PhotoHelper.SavePhoto(extra, _env)
+                });
+            }
             _context.SaveChanges();
 
             TempData["Message"] = $"{model.Name} has been updated.";
@@ -142,7 +163,6 @@ namespace PetAppointmentReservationSystem.Controllers
                 _context.SaveChanges();
                 TempData["Message"] = "Pet deleted.";
             }
-
             return RedirectToAction(nameof(Index));
         }
     }

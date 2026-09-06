@@ -101,6 +101,19 @@ namespace PetAppointmentReservationSystem.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        [HttpGet]
+        public IActionResult PetDetails(int id)
+        {
+            var pet = _context.Pets
+                .Include(p => p.Photos)
+                .Include(p => p.Owner)
+                .FirstOrDefault(p => p.PetId == id);
+
+            if (pet == null) return NotFound();
+
+            return View(pet); // can reuse Pet/Details.cshtml's markup, or a staff-specific copy
+        }
+
         private void PopulateDropdowns(int? selectedPetId = null, int? selectedStaffId = null)
         {
             var pets = _context.Pets.Include(p => p.Owner).ToList();
@@ -109,7 +122,8 @@ namespace PetAppointmentReservationSystem.Controllers
             var staff = _context.StaffMembers.OrderBy(s => s.Name).ToList();
             ViewBag.StaffList = new SelectList(staff, "StaffId", "Name", selectedStaffId);
 
-            ViewBag.ServiceList = new SelectList(ServiceCatalog.Services);
+            var services = new List<string> { "Grooming", "Vaccination", "Checkup" };
+            ViewBag.ServiceList = new SelectList(services);
         }
     }
 }

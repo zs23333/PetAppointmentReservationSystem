@@ -17,19 +17,13 @@ namespace PetAppointmentReservationSystem.Controllers
         }
 
         [HttpGet]
-        public IActionResult Register()
-        {
-            return View(new RegisterVM());
-        }
+        public IActionResult Register() => View(new RegisterVM());
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Register(RegisterVM model)
         {
-            if (!ModelState.IsValid)
-            {
-                return View(model);
-            }
+            if (!ModelState.IsValid) return View(model);
 
             if (_context.Users.Any(u => u.Username == model.Username))
             {
@@ -37,52 +31,39 @@ namespace PetAppointmentReservationSystem.Controllers
                 return View(model);
             }
 
+            var isStaff = model.Role == "Staff";
+
             var user = new User
             {
+                FullName = model.Name,
                 Username = model.Username,
                 Password = model.Password,
                 Email = model.Email,
-                Role = model.Role
+                Role = model.Role,
+                IsApproved = !isStaff // Staff starts unapproved; Customer is approved immediately.
             };
 
             _context.Users.Add(user);
             _context.SaveChanges();
 
-            // Staff auto-insert: new staff appear in the appointment dropdown immediately,
-            // no manual seeding required.
-            if (model.Role == "Staff")
-            {
-                var alreadyStaff = _context.StaffMembers.Any(s => s.UserId == user.UserId);
-                if (!alreadyStaff)
-                {
-                    _context.StaffMembers.Add(new Staff
-                    {
-                        Name = model.Name,
-                        Role = "Staff",
-                        UserId = user.UserId
-                    });
-                    _context.SaveChanges();
-                }
-            }
+            // Note: the Staff table row (and dropdown visibility) is only created
+            // once an Admin approves — see AdminController.Approve.
 
-            TempData["Message"] = $"Account created for {model.Name}. Please log in.";
+            TempData["Message"] = isStaff
+                ? "Account created. Please wait for approval from Admin before you can log in."
+                : $"Account created for {model.Name}. Please log in.";
+
             return RedirectToAction(nameof(Login));
         }
 
         [HttpGet]
-        public IActionResult Login()
-        {
-            return View(new LoginVM());
-        }
+        public IActionResult Login() => View(new LoginVM());
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginVM model)
         {
-            if (!ModelState.IsValid)
-            {
-                return View(model);
-            }
+            if (!ModelState.IsValid) return View(model);
 
             var user = _context.Users.FirstOrDefault(u =>
                 u.Username == model.Username && u.Password == model.Password);
@@ -90,6 +71,13 @@ namespace PetAppointmentReservationSystem.Controllers
             if (user == null)
             {
                 ModelState.AddModelError(string.Empty, "Invalid username or password.");
+                return View(model);
+            }
+
+            if (user.Role == "Staff" && !user.IsApproved)
+            {
+                ModelState.AddModelError(string.Empty,
+                    "Please wait for approval from Admin before you can log in.");
                 return View(model);
             }
 
